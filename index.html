@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>負數加減｜數線練功房（簡潔數線版）</title>
+<title>負數加減｜數線練功房</title>
 <meta name="theme-color" content="#7c5cff">
 <style>
   :root{
@@ -11,7 +11,7 @@
     --card:#ffffff;
     --primary:#7c5cff;     /* 正確路徑（右移） */
     --accent:#ff82b1;      /* 正確路徑（左移） */
-    --ink:#2b2b2b;
+    --ink:#222;
     --muted:#7a7a7a;
     --good:#17b26a;
     --bad:#ef4444;
@@ -23,28 +23,23 @@
     margin:0; font-family: "Noto Sans TC", system-ui, -apple-system, Segoe UI, Roboto, "PingFang TC", "Microsoft JhengHei", sans-serif;
     background: linear-gradient(180deg,var(--bg),#f8fbff);
     color:var(--ink);
+    -webkit-tap-highlight-color: transparent;
   }
+  /* Compact mobile header */
   header{
-    display:flex; gap:12px; align-items:center; justify-content:space-between;
-    padding:12px 14px; position:sticky; top:0; backdrop-filter: blur(6px);
-    background:rgba(255,255,255,0.75); border-bottom:1px solid #eee; z-index:10;
+    display:flex; align-items:center; justify-content:space-between;
+    padding:6px 10px; position:sticky; top:0; backdrop-filter: blur(6px);
+    background:rgba(255,255,255,0.88); border-bottom:1px solid #eee; z-index:10;
   }
-  .brand{display:flex; gap:10px; align-items:center;}
+  .brand{display:flex; align-items:center; gap:8px; min-width:0}
   .brand .logo{
-    width:36px; height:36px; border-radius:12px; display:grid; place-items:center;
+    width:26px; height:26px; border-radius:8px; display:grid; place-items:center;
     background: radial-gradient(circle at 30% 30%, #ffd9e8, #d9e4ff);
     box-shadow: 0 6px 16px rgba(124,92,255,0.25) inset;
-    font-size:20px;
+    font-size:14px;
   }
-  .brand h1{font-size:18px; margin:0;}
-  .toolbar{display:flex; gap:8px; align-items:center;}
-  .pill{
-    background:var(--card); border:1px solid #eee; padding:6px 10px; border-radius:999px;
-    display:flex; align-items:center; gap:8px;
-  }
-  input[type="text"]{
-    border:none; outline:none; background:transparent; min-width:100px; font-size:14px;
-  }
+  .brand h1{font-size:14px; line-height:1; margin:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .toolbar{display:flex; gap:6px; align-items:center;}
   button, .btn{
     cursor:pointer; border:none; padding:10px 14px; border-radius:12px; font-weight:700;
     background:var(--primary); color:white; box-shadow:0 6px 16px rgba(124,92,255,0.25);
@@ -53,59 +48,60 @@
   button.ghost{background:#f2f2ff; color:#4b4bb5; box-shadow:none}
   button.flat{background:#efefef; color:#333; box-shadow:none}
   button:active{transform: translateY(1px)}
+  /* Mobile-first layout */
   .layout{
-    display:grid; grid-template-columns: 1fr 360px; gap:14px; padding:12px; max-width:1100px; margin:0 auto;
-  }
-  @media (max-width: 980px){
-    .layout{grid-template-columns: 1fr}
+    display:grid; grid-template-columns: 1fr; gap:10px; padding:10px; max-width:720px; margin:0 auto;
   }
   .card{
-    background:var(--card); border:1px solid #eee; border-radius:18px; padding:14px;
-    box-shadow: 0 12px 24px rgba(0,0,0,0.04);
+    background:var(--card); border:1px solid #eee; border-radius:14px; padding:12px;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.04);
   }
+  .mode-tabs{display:flex; gap:6px; flex-wrap:wrap; margin-bottom:8px; justify-content:center}
+  .mode-tabs button{background:#ffeefe; color:#7b3a6a; padding:8px 10px; border-radius:10px}
+  .mode-tabs button.active{background:var(--accent); color:#fff}
   .scorebar{
-    display:grid; grid-template-columns: repeat(4,1fr); gap:8px; margin-bottom:8px;
+    display:grid; grid-template-columns: repeat(4,1fr); gap:6px; margin-bottom:6px;
   }
   .chip{
-    background:var(--chip); border:1px dashed #d7d7ff; border-radius:12px; padding:8px; text-align:center;
-    font-weight:800; color:#4b4bb5; font-size:14px;
+    background:var(--chip); border:1px dashed #d7d7ff; border-radius:10px; padding:6px; text-align:center;
+    font-weight:800; color:#4b4bb5; font-size:13px;
+    position:relative;
   }
+  .score-fly{
+    position:absolute; left:50%; top:-2px; transform:translate(-50%,0);
+    font-size:12px; font-weight:900; opacity:0; pointer-events:none;
+    transition: transform .6s ease, opacity .6s ease;
+  }
+  .score-fly.show{opacity:1; transform:translate(-50%,-18px);}
   .big-op{
-    font-size: clamp(20px, 2.2vw, 26px);
+    font-size: clamp(18px, 4.5vw, 22px);
     display:flex; align-items:center; justify-content:center; gap:8px; margin:4px 0 8px; flex-wrap:wrap;
   }
   .big-op .bubble{
     background:#fff4f9; border:2px solid #ffd6ea; color:#c84580; font-weight:900;
-    padding:8px 12px; border-radius:12px;
+    padding:6px 10px; border-radius:10px;
   }
   .answer-pack{ display:flex; align-items:center; gap:6px; flex-wrap:wrap; justify-content:center; }
   .answer-pack input[type="text"]{
-    width:130px; padding:10px; border-radius:12px; border:1px solid #ddd; font-size:20px; font-weight:800; text-align:center;
+    width:120px; padding:10px; border-radius:12px; border:1px solid #ddd; font-size:20px; font-weight:800; text-align:center;
     background:#fff;
   }
   .mini-keys{display:flex; gap:6px; align-items:center; flex-wrap:wrap; justify-content:center}
   .mini-keys .k{background:#f2f2ff; color:#4b4bb5; padding:8px 10px; border-radius:10px; font-weight:800; border:1px solid #d7d7ff}
+  .controls{display:flex; gap:6px; justify-content:center; flex-wrap:wrap; margin-top:6px}
+  .controls button{min-width:92px}
   .numline-wrap{
     background: #fff9fb;
-    border:1px dashed #ffd0e6; border-radius:16px; padding:8px; margin:8px 0 6px;
+    border:1px dashed #ffd0e6; border-radius:14px; padding:8px; margin:8px 0 6px;
   }
   svg{width:100%; height:auto;}
-  .answer-row{display:flex; gap:8px; align-items:center; margin-top:6px; flex-wrap:wrap; justify-content:center;}
-  .result-msg{min-height:24px; font-weight:900;}
+  .result-msg{min-height:24px; font-weight:900; text-align:center; margin-top:4px}
   .ok{color:var(--good)} .ng{color:var(--bad)}
-  .mode-tabs{display:flex; gap:6px; flex-wrap:wrap; margin-bottom:6px; justify-content:center}
-  .mode-tabs button{background:#ffeefe; color:#7b3a6a}
-  .mode-tabs button.active{background:var(--accent); color:#fff}
-  .right-col .section{margin-bottom:12px}
-  .list{display:flex; flex-direction:column; gap:6px; max-height:360px; overflow:auto}
-  .list .row{
-    display:grid; grid-template-columns: 1fr auto; gap:8px; align-items:center; padding:8px 12px; border:1px solid #eee; border-radius:10px;
+  .tiny{font-size:12px; color:var(--muted); text-align:center}
+  .side{display:grid; gap:10px}
+  @media (min-width: 900px){
+    .layout{grid-template-columns: 1fr 320px; max-width:1100px}
   }
-  .tiny{font-size:12px; color:var(--muted)}
-  .label{font-size:12px; color:var(--muted)}
-  .hidden{display:none !important}
-  .rank-medal{font-size:20px}
-  .footer-note{font-size:12px; color:var(--muted); text-align:center; margin-top:6px}
 </style>
 </head>
 <body>
@@ -115,11 +111,7 @@
     <h1>負數加減｜數線練功房</h1>
   </div>
   <div class="toolbar">
-    <div class="pill">
-      <span>👤 名稱</span>
-      <input id="nickname" type="text" placeholder="輸入你的暱稱…" />
-    </div>
-    <button id="btnSettings" class="ghost">⚙️ 設定</button>
+    <button id="btnSettings" class="ghost" aria-label="設定">⚙️</button>
   </div>
 </header>
 
@@ -132,7 +124,7 @@
     </div>
 
     <div class="scorebar">
-      <div class="chip">⭐ 分數 <span id="score">0</span></div>
+      <div class="chip">⭐ 分數 <span id="score">0</span><span id="scoreFly" class="score-fly">+0</span></div>
       <div class="chip">🔥 連擊 <span id="streak">0</span></div>
       <div class="chip">🎓 熟練度 <span id="mastery">0%</span></div>
       <div class="chip">🏆 最高分 <span id="best">0</span></div>
@@ -144,66 +136,64 @@
       <div class="bubble" id="opB">2</div>
       <div class="bubble">=</div>
       <div class="answer-pack">
-        <!-- 手機負號：text + inputmode=decimal + 專用「−」鍵 -->
         <input id="answer" type="text" inputmode="decimal" pattern="-?[0-9]*" placeholder="輸入整數…" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
         <div class="mini-keys">
           <button class="k" id="btnMinus" type="button">−</button>
           <button class="k" id="btnClear" type="button">清除</button>
         </div>
       </div>
+    </div>
+
+    <div class="controls">
       <button id="btnSubmit" type="button">送出</button>
+      <button id="btnNext" class="ghost" type="button">下一題 ▶</button>
       <button id="btnSkip" class="flat" type="button">略過</button>
     </div>
 
     <div class="numline-wrap">
       <svg id="numline" viewBox="0 0 800 150" preserveAspectRatio="xMidYMid meet" role="img" aria-label="數線"></svg>
-      <div class="tiny" style="text-align:center; margin-top:4px">
+      <div class="tiny">
         練習/複習：顯示正確步驟；測驗：送出後才顯示。
       </div>
     </div>
 
-    <div class="answer-row">
-      <div id="resultMsg" class="result-msg"></div>
-      <button id="btnNext" class="hidden" type="button">下一題 ▶</button>
-      <button id="btnShowSteps" class="ghost hidden" type="button">顯示步驟</button>
-    </div>
-
-    <div class="footer-note">提示：每題皆以「系統示意」的數線呈現正確步驟（不再同步顯示作答者的路徑）。</div>
+    <div id="resultMsg" class="result-msg"></div>
   </main>
 
-  <aside class="right-col">
-    <div class="card section">
-      <h3>🧠 常錯題型雷達</h3>
-      <div class="tiny">四大型態：(-a)+b、a+(-b)、(-a)+(-b)、(-a)-b</div>
-      <div class="list" id="errorTypes"></div>
-    </div>
+  <aside class="side">
+    <section class="card">
+      <h3 style="margin:0 0 8px;font-size:14px;">🧠 常錯題型雷達</h3>
+      <div class="tiny">(-a)+b、a+(-b)、(-a)+(-b)、(-a)-b</div>
+      <div id="errorTypes" style="display:flex;flex-direction:column;gap:6px;margin-top:6px"></div>
+    </section>
 
-    <div class="card section">
-      <h3>📜 最近答題</h3>
-      <div class="list" id="recentLog"></div>
-    </div>
+    <section class="card">
+      <h3 style="margin:0 0 8px;font-size:14px;">📜 最近答題</h3>
+      <div id="recentLog" style="display:flex;flex-direction:column;gap:6px"></div>
+    </section>
   </aside>
 </div>
 
 <!-- 設定對話框 -->
-<div id="settingsModal" class="hidden" style="position:fixed; inset:0; display:grid; place-items:center; background:rgba(0,0,0,0.4);">
-  <div class="card" style="width:min(760px,95vw); max-height:90vh; overflow:auto;">
-    <h3>⚙️ 設定</h3>
+<div id="settingsModal" class="hidden" style="position:fixed; inset:0; display:grid; place-items:center; background:rgba(0,0,0,0.45);">
+  <div class="card" style="width:min(560px,95vw); max-height:90vh; overflow:auto;">
+    <h3 style="margin:0 0 8px">⚙️ 設定</h3>
     <div style="display:grid; gap:10px;">
       <div class="row">
-        <label class="label">數值範圍（含負數）：</label>
+        <label class="tiny">暱稱（本機記錄用）</label>
+        <input id="nickname" type="text" placeholder="輸入你的暱稱…" style="width:100%;border:1px solid #ddd;border-radius:10px;padding:8px"/>
+      </div>
+      <div class="row">
+        <label class="tiny">數值範圍（含負數）</label>
         <div style="display:flex; gap:8px; align-items:center;">
-          <span>最小</span><input id="minVal" type="number" value="-10" style="width:100px">
-          <span>最大</span><input id="maxVal" type="number" value="10" style="width:100px">
+          <span class="tiny">最小</span><input id="minVal" type="number" value="-10" style="width:100px">
+          <span class="tiny">最大</span><input id="maxVal" type="number" value="10" style="width:100px">
         </div>
       </div>
       <div class="row" style="display:flex; gap:14px; align-items:center; flex-wrap:wrap">
-        <label><input id="soundOn" type="checkbox" checked> 啟用音效</label>
-        <label><input id="autoExam" type="checkbox" checked> 熟練度 ≥80% 時提示挑戰測驗</label>
-        <label><input id="showNumlinePractice" type="checkbox" checked> 練習模式顯示數線</label>
-      </div>
-      <div class="row">
-        <div class="label">熟練度：以最近 50 題正確率為基礎；錯題複習命中可加速提升。</div>
+        <label class="tiny"><input id="soundOn" type="checkbox" checked> 啟用音效</label>
+        <label class="tiny"><input id="autoExam" type="checkbox" checked> 熟練度 ≥80% 時提示挑戰測驗</label>
+        <label class="tiny"><input id="showNumlinePractice" type="checkbox" checked> 練習模式顯示數線</label>
       </div>
       <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:10px">
         <button id="btnReset" class="flat" type="button">清除本機資料</button>
@@ -225,7 +215,7 @@ const state = {
   errorBucket: { "(-a)+b":0, "a+(-b)":0, "(-a)+(-b)":0, "(-a)-b":0 },
   reviewQueue: []
 };
-const LS_KEY = 'neg_add_sub_simpleline_v1';
+const LS_KEY = 'neg_add_sub_mobile_ui_v3';
 function save(){
   const data = { settings: state.settings, user: state.user, score: state.score, streak: state.streak, best: state.best, history: state.history.slice(-200), errorBucket: state.errorBucket };
   localStorage.setItem(LS_KEY, JSON.stringify(data));
@@ -280,19 +270,16 @@ const $ = sel => document.querySelector(sel);
 const $$ = sel => Array.from(document.querySelectorAll(sel));
 const elA = $('#opA'), elB = $('#opB'), elSign = $('#opSign');
 const elAns = $('#answer'), elSubmit = $('#btnSubmit'), elSkip = $('#btnSkip');
-const elNext = $('#btnNext'), elShowSteps = $('#btnShowSteps');
+const elNext = $('#btnNext');
 const elMsg = $('#resultMsg'); const elScore = $('#score'), elStreak = $('#streak'), elBest = $('#best'), elMastery = $('#mastery');
-const elNickname = $('#nickname'); const elNumline = $('#numline');
+const elNumline = $('#numline'); const scoreFly = $('#scoreFly');
 
-const btnMinus = $('#btnMinus'), btnClear = $('#btnClear');
-
-function updateHeader(){ elScore.textContent=state.score; elStreak.textContent=state.streak; elBest.textContent=state.best; elMastery.textContent=Math.round(calcMastery()*100)+'%'; elNickname.value=state.user.nickname||''; }
+function updateHeader(){ elScore.textContent=state.score; elStreak.textContent=state.streak; elBest.textContent=state.best; elMastery.textContent=Math.round(calcMastery()*100)+'%'; }
 
 function setProblem(p){
   state.a=p.a; state.sign=p.sign; state.b=p.b;
   elA.textContent=p.a; elB.textContent=p.b; elSign.textContent=p.sign;
-  elAns.value=''; elAns.focus({preventScroll:true}); elMsg.textContent=''; elNext.classList.add('hidden'); elShowSteps.classList.add('hidden');
-  // 練習/複習顯示正確步驟；測驗不顯示直到送出
+  elAns.value=''; elMsg.textContent='';
   const showNow = (state.mode!=='exam') && (!!state.settings.showNumlinePractice || state.mode==='review');
   drawNumberLine(p.a, p.sign, p.b, showNow ? (p.sign==='+'? p.a+p.b : p.a-p.b) : null);
 }
@@ -351,42 +338,45 @@ function drawNumberLine(a, sign, b, answerOrNull){
   `;
 }
 
-/* ===== 檢查答案、計分 ===== */
+/* ===== 檢查答案、計分（即時反應 + 分數動畫） ===== */
 function submitAnswer(){
   const raw = elAns.value.trim();
   if(!/^[-]?\\d+$/.test(raw)){
-    elMsg.textContent = '請輸入整數（可含負號）';
-    elMsg.className = 'result-msg ng'; beep('bad'); return;
+    // 不顯示「請輸入整數」，若輸入無效就忽略
+    return;
   }
   const userAns = parseInt(raw,10);
   const {a,b,sign} = state;
   const correctAns = sign==='+' ? a+b : a-b;
   const ok = (userAns===correctAns);
 
-  // 顯示正確步驟與終點
+  // 顯示正確步驟與終點（測驗也在送出後顯示）
   drawNumberLine(a, sign, b, correctAns);
 
   const rec = {a,b,sign,ans:userAns,correct:ok, ts:Date.now()}; pushHistory(rec);
-  const typ = classifyType(a, sign, b); if(state.errorBucket[typ]!==undefined && !ok){ state.errorBucket[typ]+=1; }
 
   if(ok){
     beep('good'); state.streak += 1;
     const bonus = 10 + Math.min(state.streak*2, 30); state.score += bonus;
     elMsg.textContent = '答對';
     elMsg.className='result-msg ok';
-    elNext.classList.remove('hidden');           // 正確顯示「下一題」
+    // 分數動畫
+    scoreFly.textContent = `+${bonus}`;
+    scoreFly.style.color = 'var(--good)';
+    scoreFly.classList.add('show');
+    setTimeout(()=> scoreFly.classList.remove('show'), 650);
   }else{
     beep('bad'); state.streak = 0; state.score = Math.max(0, state.score - 3);
-    elMsg.textContent = '答錯｜請仔細看數線';
+    elMsg.textContent = '答錯';
     elMsg.className='result-msg ng';
-    elNext.classList.add('hidden');              // 錯誤不顯示「下一題」
-    // 若在測驗模式，提供顯示步驟按鈕（已直接顯示步驟，所以仍隱藏）
+    // 錯誤不加分，但也做個微動畫提示
+    scoreFly.textContent = `-3`;
+    scoreFly.style.color = 'var(--bad)';
+    scoreFly.classList.add('show');
+    setTimeout(()=> scoreFly.classList.remove('show'), 650);
   }
 
   if(state.score>state.best){ state.best = state.score; }
-  if(state.settings.autoExam){
-    const m = calcMastery(); if(m>=0.8){ /* 只提示，不自動跳轉 */ }
-  }
   updateHeader(); save(); renderRightPanels();
 }
 
@@ -400,10 +390,10 @@ function switchMode(m){
 function renderRightPanels(){
   const et = $('#errorTypes'); et.innerHTML='';
   const items = Object.entries(state.errorBucket);
-  if(items.every(([k,v])=>v===0)){ et.innerHTML = `<div class="tiny">太讚了！目前沒有明顯的常錯型態。</div>`; }
+  if(items.every(([k,v])=>v===0)){ et.innerHTML = `<div class="tiny">目前沒有明顯的常錯型態。</div>`; }
   else{
     for(const [k,v] of items){
-      const row=document.createElement('div'); row.className='row';
+      const row=document.createElement('div'); row.style.cssText='display:flex;justify-content:space-between;align-items:center;border:1px solid #eee;border-radius:10px;padding:6px 10px';
       row.innerHTML = `<div>${k}</div><div class="tiny">錯 <b>${v}</b> 次</div>`; et.appendChild(row);
     }
   }
@@ -411,7 +401,7 @@ function renderRightPanels(){
   if(last.length===0){ log.innerHTML = `<div class="tiny">尚無資料</div>`; }
   else{
     last.forEach(r=>{
-      const row=document.createElement('div'); row.className='row';
+      const row=document.createElement('div'); row.style.cssText='display:flex;justify-content:space-between;align-items:center;border:1px solid #eee;border-radius:10px;padding:6px 10px';
       const ans = r.sign==='+'? r.a+r.b : r.a-r.b;
       row.innerHTML = `<div>${r.a} ${r.sign} ${r.b} = ${ans}</div><div class="${r.correct?'ok':'ng'}">${r.correct?'✔︎':'✖︎'}</div>`;
       log.appendChild(row);
@@ -424,6 +414,7 @@ const modal = $('#settingsModal');
 $('#btnSettings').addEventListener('click', ()=>{
   $('#minVal').value=state.settings.minVal; $('#maxVal').value=state.settings.maxVal;
   $('#soundOn').checked=state.settings.soundOn; $('#autoExam').checked=state.settings.autoExam; $('#showNumlinePractice').checked=state.settings.showNumlinePractice;
+  $('#nickname').value=state.user.nickname||'';
   modal.classList.remove('hidden');
 });
 $('#btnCloseSettings').addEventListener('click', ()=> modal.classList.add('hidden'));
@@ -435,24 +426,30 @@ $('#maxVal').addEventListener('change', e=>{ state.settings.maxVal=Number(e.targ
 $('#soundOn').addEventListener('change', e=>{ state.settings.soundOn=!!e.target.checked; save(); });
 $('#autoExam').addEventListener('change', e=>{ state.settings.autoExam=!!e.target.checked; save(); });
 $('#showNumlinePractice').addEventListener('change', e=>{ state.settings.showNumlinePractice=!!e.target.checked; save(); setProblem({a:state.a, sign:state.sign, b:state.b}); });
-
 $('#nickname').addEventListener('change', e=>{ state.user.nickname=e.target.value.trim(); save(); });
 
-/* ===== 事件：答題（行動版可靠觸發） ===== */
+/* ===== 事件：送出／下一題／略過（行動版可靠觸發） ===== */
 const submitAnswerPointerSafe = ()=> submitAnswer();
 elSubmit.addEventListener('click', submitAnswerPointerSafe);
 elSubmit.addEventListener('pointerup', submitAnswerPointerSafe);
-elAns.addEventListener('keydown', (e)=>{ if(e.key==='Enter') submitAnswer(); });
-// 不再同步顯示作答者的路徑，因此移除 input 即時渲染
-elSkip.addEventListener('click', ()=>{ skipQuestion(); });
-elSkip.addEventListener('pointerup', ()=>{ skipQuestion(); });
-btnMinus.addEventListener('click', ()=>{
+elNext.addEventListener('click', ()=> nextProblem());
+elNext.addEventListener('pointerup', ()=> nextProblem());
+elSkip.addEventListener('click', ()=> skipQuestion());
+elSkip.addEventListener('pointerup', ()=> skipQuestion());
+
+// 手機負號鍵
+$('#btnMinus').addEventListener('click', ()=>{
   const v = elAns.value;
   if(v.startsWith('-')){ elAns.value = v.slice(1); }
   else{ elAns.value = v ? ('-'+v) : '-'; }
   elAns.focus({preventScroll:true});
 });
-btnClear.addEventListener('click', ()=>{ elAns.value=''; elAns.focus({preventScroll:true}); });
+$('#btnClear').addEventListener('click', ()=>{ elAns.value=''; elAns.focus({preventScroll:true}); });
+
+// Enter 送出
+elAns.addEventListener('keydown', (e)=>{ if(e.key==='Enter') submitAnswer(); });
+
+$$('.mode-tabs button').forEach(btn=> btn.addEventListener('click', ()=> switchMode(btn.dataset.mode)));
 
 /* ===== 初始化 ===== */
 function init(){ load(); updateHeader(); renderRightPanels(); nextProblem(); document.addEventListener('gesturestart', e=>e.preventDefault()); }
