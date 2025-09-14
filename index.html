@@ -16,7 +16,6 @@
     margin:0; font-family:"Noto Sans TC",system-ui,-apple-system,Segoe UI,Roboto,"PingFang TC","Microsoft JhengHei",sans-serif;
     background:linear-gradient(180deg,var(--bg),#f8fbff); color:var(--ink); -webkit-tap-highlight-color:transparent;
   }
-  .hidden{display:none !important}
 
   /* compact header */
   header{display:flex;align-items:center;justify-content:space-between;padding:6px 10px;position:sticky;top:0;
@@ -25,6 +24,7 @@
   .logo{width:26px;height:26px;border-radius:8px;display:grid;place-items:center;
     background:radial-gradient(circle at 30% 30%,#ffd9e8,#d9e4ff);box-shadow:0 6px 16px rgba(124,92,255,.25) inset;font-size:14px}
   h1{font-size:14px;line-height:1;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
   button{cursor:pointer;border:none;padding:10px 14px;border-radius:12px;font-weight:700;background:var(--primary);color:#fff;box-shadow:0 6px 16px rgba(124,92,255,.25)}
   button.ghost{background:#f2f2ff;color:#4b4bb5;box-shadow:none}
   button.flat{background:#efefef;color:#333;box-shadow:none}
@@ -33,9 +33,245 @@
   /* layout */
   .layout{display:grid;grid-template-columns:1fr;gap:10px;padding:10px;max-width:720px;margin:0 auto}
   .card{background:var(--card);border:1px solid #eee;border-radius:14px;padding:12px;box-shadow:0 10px 20px rgba(0,0,0,.04)}
+
   .mode-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;justify-content:center}
   .mode-tabs button{background:#ffeefe;color:#7b3a6a;padding:8px 10px;border-radius:10px}
   .mode-tabs button.active{background:var(--accent);color:#fff}
 
   .scorebar{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:6px}
-  .chip{background:var(--chip);border:1px dashed #d7d7ff;border-radius:10px;padding:6px;text-align:center;font-weight:800;color:#4b4bb5;fon
+  .chip{background:var(--chip);border:1px dashed #d7d7ff;border-radius:10px;padding:6px;text-align:center;font-weight:800;color:#4b4bb5;font-size:13px;position:relative}
+  .score-fly{position:absolute;left:50%;top:-2px;transform:translate(-50%,0);font-size:12px;font-weight:900;opacity:0;transition:transform .6s ease,opacity .6s ease}
+  .score-fly.show{opacity:1;transform:translate(-50%,-18px)}
+
+  .big-op{font-size:clamp(18px,4.5vw,22px);display:flex;align-items:center;justify-content:center;gap:8px;margin:4px 0 8px;flex-wrap:wrap}
+  .bubble{background:#fff4f9;border:2px solid #ffd6ea;color:#c84580;font-weight:900;padding:6px 10px;border-radius:10px}
+  .answer-pack{display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:center}
+  #answer{width:120px;padding:10px;border-radius:12px;border:1px solid #ddd;font-size:20px;font-weight:800;text-align:center;background:#fff}
+  .mini-keys{display:flex;gap:6px;align-items:center;flex-wrap:wrap;justify-content:center}
+  .mini-keys .k{background:#f2f2ff;color:#4b4bb5;padding:8px 10px;border-radius:10px;font-weight:800;border:1px solid #d7d7ff}
+
+  .controls{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-top:6px}
+  .controls button{min-width:92px}
+
+  .numline-wrap{background:#fff9fb;border:1px dashed #ffd0e6;border-radius:14px;padding:8px;margin:8px 0 6px}
+  svg{width:100%;height:auto}
+  .result-msg{min-height:24px;font-weight:900;text-align:center;margin-top:4px}
+  .ok{color:var(--good)} .ng{color:var(--bad)}
+  .tiny{font-size:12px;color:#666;text-align:center}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand"><div class="logo">➕</div><h1>負數加減｜數線練功房</h1></div>
+</header>
+
+<div class="layout">
+  <main class="card">
+    <div class="mode-tabs">
+      <button data-mode="practice" class="active">🌱 練習（有數線）</button>
+      <button data-mode="review">🧩 錯題複習</button>
+      <button data-mode="exam">🎯 測驗（無數線）</button>
+    </div>
+
+    <div class="scorebar">
+      <div class="chip">⭐ 分數 <span id="score">0</span><span id="scoreFly" class="score-fly">+0</span></div>
+      <div class="chip">🔥 連擊 <span id="streak">0</span></div>
+      <div class="chip">🎓 熟練度 <span id="mastery">0%</span></div>
+      <div class="chip">🏆 最高分 <span id="best">0</span></div>
+    </div>
+
+    <div class="big-op">
+      <div class="bubble" id="opA">-3</div>
+      <div class="bubble" id="opSign">-</div>
+      <div class="bubble" id="opB">2</div>
+      <div class="bubble">=</div>
+      <div class="answer-pack">
+        <input id="answer" type="text" inputmode="decimal" pattern="-?[0-9]*" placeholder="輸入整數…" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+        <div class="mini-keys">
+          <button class="k" id="btnMinus" type="button">−</button>
+          <button class="k" id="btnClear" type="button">清除</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="controls">
+      <button id="btnSubmit" type="button">送出</button>
+      <button id="btnNext" class="ghost" type="button">下一題 ▶</button>
+      <button id="btnSkip" class="flat" type="button">略過</button>
+    </div>
+
+    <div class="numline-wrap">
+      <svg id="numline" viewBox="0 0 800 150" preserveAspectRatio="xMidYMid meet" role="img" aria-label="數線"></svg>
+      <div class="tiny">練習/複習：顯示正確步驟；測驗：送出後才顯示。</div>
+    </div>
+
+    <div id="resultMsg" class="result-msg"></div>
+  </main>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+  "use strict";
+
+  /* 工具 */
+  const $ = s => document.querySelector(s);
+  const $$ = s => Array.from(document.querySelectorAll(s));
+  const onClick = (el, fn) => el && el.addEventListener('click', fn);
+
+  /* 狀態與持久化 */
+  const state = {
+    mode:'practice', a:0, b:0, sign:'+',
+    score:0, streak:0, best:0, history:[], reviewQueue:[]
+  };
+  const LS_KEY='neg_add_sub_minimal_v1';
+  function save(){ localStorage.setItem(LS_KEY, JSON.stringify({score:state.score, streak:state.streak, best:state.best, history:state.history.slice(-200)})); }
+  function load(){
+    try{
+      const d=JSON.parse(localStorage.getItem(LS_KEY)||'null'); if(!d) return;
+      state.score=d.score||0; state.streak=d.streak||0; state.best=d.best||0; state.history=Array.isArray(d.history)?d.history:[];
+    }catch(e){}
+  }
+
+  /* 音效（可用即鳴，不影響功能） */
+  let audioCtx;
+  function beep(ok){
+    try{
+      audioCtx = audioCtx || new (window.AudioContext||window.webkitAudioContext)();
+      const o=audioCtx.createOscillator(), g=audioCtx.createGain();
+      o.type='sine'; o.frequency.value = ok?880:220;
+      g.gain.value=0.0001; g.gain.exponentialRampToValueAtTime(0.25, audioCtx.currentTime+0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime+0.2);
+      o.connect(g).connect(audioCtx.destination); o.start(); o.stop(audioCtx.currentTime+0.22);
+    }catch(e){}
+  }
+
+  /* 題目產生：至少一個是負數 */
+  const ri=(mn,mx)=>Math.floor(Math.random()*(mx-mn+1))+mn;
+  function genProblem(){
+    let a=0,b=0,sign = Math.random()<0.5?'+':'-';
+    do{ a=ri(-10,10); b=ri(-10,10); }while(!(a<0||b<0)||(a===0&&b===0));
+    return {a,sign,b};
+  }
+
+  /* 數線（SVG） */
+  const elNumline = $('#numline');
+  function drawNumberLine(a, sign, b, showAnswer){
+    const result = sign==='+' ? a+b : a-b;
+    const min = Math.min(-12, a, result) - 1;
+    const max = Math.max( 12, a, result) + 1;
+    const w=780, h=150, pad=40;
+    const scale = x => pad + (x - min) * ((w-2*pad)/Math.max(1,(max-min)));
+    const steps = (sign==='+'? b : -b);
+    const dir = steps>=0 ? 1 : -1, nSteps = Math.abs(steps);
+
+    let ticks='';
+    for(let x=min; x<=max; x++){
+      const X=scale(x), isZ=(x===0);
+      ticks += `<line x1="${X}" y1="${h-45}" x2="${X}" y2="${h-35}" stroke="${isZ?'#c84580':'#888'}" stroke-width="${isZ?2:1}" />`;
+      ticks += `<text x="${X}" y="${h-18}" text-anchor="middle" font-size="12" fill="${isZ?'#c84580':'#555'}" font-weight="${isZ?700:400}">${x}</text>`;
+    }
+    const base = `<line x1="${scale(min)}" y1="${h-40}" x2="${scale(max)}" y2="${h-40}" stroke="#444" stroke-width="2" />${ticks}`;
+
+    let arcs=''; let cur=a; const color = dir>0? '#7c5cff' : '#ff82b1';
+    for(let i=0;i<nSteps;i++){
+      const x1=scale(cur), x2=scale(cur+dir), mid=(x1+x2)/2, arcH=24+Math.min(i*3,18);
+      arcs += `<path d="M ${x1} ${h-42} Q ${mid} ${h-42-arcH} ${x2} ${h-42}" fill="none" stroke="${color}" stroke-width="2" marker-end="url(#arrow)"/>`;
+      cur+=dir;
+    }
+
+    const nowDot = `<circle cx="${scale(a)}" cy="${h-40}" r="6" fill="#4b4bb5"/>`;
+    const resDot = showAnswer ? `<circle cx="${scale(result)}" cy="${h-40}" r="6" fill="${color}"/>` : '';
+
+    elNumline.innerHTML = `
+      <defs>
+        <marker id="arrow" markerWidth="12" markerHeight="12" refX="8" refY="6" orient="auto-start-reverse">
+          <path d="M0,0 L12,6 L0,12 z" fill="${color}"></path>
+        </marker>
+      </defs>
+      ${base}${arcs}${nowDot}${resDot}
+    `;
+  }
+
+  /* UI 元素 */
+  const elA=$('#opA'), elB=$('#opB'), elSign=$('#opSign'), elAns=$('#answer');
+  const elSubmit=$('#btnSubmit'), elNext=$('#btnNext'), elSkip=$('#btnSkip');
+  const elMsg=$('#resultMsg'), elScore=$('#score'), elStreak=$('#streak'), elBest=$('#best'), elMastery=$('#mastery');
+  const scoreFly=$('#scoreFly');
+
+  function updateHud(){
+    elScore.textContent=state.score; elStreak.textContent=state.streak; elBest.textContent=state.best;
+    const N=50, recent=state.history.slice(-N), m=recent.length? recent.filter(h=>h.correct).length/recent.length : 0;
+    elMastery.textContent=Math.round(m*100)+'%';
+  }
+
+  function setProblem(p){
+    state.a=p.a; state.sign=p.sign; state.b=p.b;
+    elA.textContent=p.a; elB.textContent=p.b; elSign.textContent=p.sign;
+    elAns.value=''; elMsg.textContent='';
+    const showNow = (state.mode!=='exam');
+    drawNumberLine(p.a, p.sign, p.b, showNow ? (p.sign==='+'? p.a+p.b : p.a-p.b) : false);
+  }
+  function nextProblem(){
+    if(state.mode==='review' && state.reviewQueue.length){ setProblem(state.reviewQueue.shift()); return; }
+    if(state.mode==='review' && !state.reviewQueue.length){ switchMode('practice'); return; }
+    setProblem(genProblem());
+  }
+
+  function pushHistory(rec){
+    state.history.push(rec);
+    if(!rec.correct){
+      state.reviewQueue.push({a:rec.a, sign:rec.sign, b:rec.b});
+      if(state.reviewQueue.length>50) state.reviewQueue.shift();
+    }
+    save();
+  }
+
+  function submitAnswer(){
+    const raw=(elAns.value||'').trim();
+    if(!/^-?\d+$/.test(raw)) return; // 靜默忽略非整數
+    const userAns=parseInt(raw,10), {a,b,sign}=state, correct=(sign==='+'? a+b : a-b);
+    const ok=(userAns===correct);
+
+    // 測驗也在送出後顯示正確路徑與終點
+    drawNumberLine(a,sign,b,true);
+    pushHistory({a,b,sign,ans:userAns,correct:ok,ts:Date.now()});
+
+    if(ok){
+      beep(true); state.streak+=1; const bonus=10+Math.min(state.streak*2,30); state.score+=bonus;
+      elMsg.textContent='答對'; elMsg.className='result-msg ok';
+      scoreFly.textContent='+'+bonus; scoreFly.style.color='var(--good)'; scoreFly.classList.add('show'); setTimeout(()=>scoreFly.classList.remove('show'),650);
+    }else{
+      beep(false); state.streak=0; state.score=Math.max(0, state.score-3);
+      elMsg.textContent='答錯'; elMsg.className='result-msg ng';
+      scoreFly.textContent='-3'; scoreFly.style.color='var(--bad)'; scoreFly.classList.add('show'); setTimeout(()=>scoreFly.classList.remove('show'),650);
+    }
+    if(state.score>state.best) state.best=state.score;
+    updateHud(); save();
+  }
+
+  function switchMode(m){
+    state.mode=m;
+    $$('.mode-tabs button').forEach(b=>b.classList.toggle('active', b.dataset.mode===m));
+    nextProblem();
+  }
+
+  /* 綁定（只用 click，最穩定） */
+  onClick($('#btnMinus'), ()=>{
+    const v=elAns.value||'';
+    if(v.startsWith('-')) elAns.value=v.slice(1); else elAns.value= v?('-'+v):'-';
+    elAns.focus({preventScroll:true});
+  });
+  onClick($('#btnClear'), ()=>{ elAns.value=''; elAns.focus({preventScroll:true}); });
+  onClick(elSubmit, submitAnswer);
+  onClick(elNext, nextProblem);
+  onClick(elSkip, ()=>{ elMsg.textContent=''; state.streak=0; updateHud(); nextProblem(); });
+  elAns.addEventListener('keydown', e=>{ if(e.key==='Enter') submitAnswer(); });
+
+  $$('.mode-tabs button').forEach(btn=> onClick(btn, ()=> switchMode(btn.dataset.mode)));
+
+  /* 啟動 */
+  load(); updateHud(); setProblem(genProblem());
+});
+</script>
+</body>
+</html>
