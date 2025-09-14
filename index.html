@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>負數加減｜數線練功房（疊加對比高亮版）</title>
+<title>負數加減｜數線練功房（手機優化）</title>
 <meta name="theme-color" content="#7c5cff">
 <style>
   :root{
@@ -16,6 +16,7 @@
     --good:#17b26a;        /* 你的路徑，完全正確 */
     --warn:#f59e0b;        /* 你的路徑，方向對但步數不對 */
     --bad:#ef4444;         /* 你的路徑，方向錯誤 */
+    --chip:#f7f7ff;
   }
   *{box-sizing:border-box}
   html,body{height:100%}
@@ -67,7 +68,7 @@
     display:grid; grid-template-columns: repeat(4,1fr); gap:8px; margin-bottom:8px;
   }
   .chip{
-    background:#f7f7ff; border:1px dashed #d7d7ff; border-radius:12px; padding:8px; text-align:center;
+    background:var(--chip); border:1px dashed #d7d7ff; border-radius:12px; padding:8px; text-align:center;
     font-weight:800; color:#4b4bb5; font-size:14px;
   }
   .big-op{
@@ -78,6 +79,15 @@
     background:#fff4f9; border:2px solid #ffd6ea; color:#c84580; font-weight:900;
     padding:8px 12px; border-radius:12px;
   }
+  .answer-pack{
+    display:flex; align-items:center; gap:6px; flex-wrap:wrap; justify-content:center;
+  }
+  .answer-pack input[type="text"]{
+    width:130px; padding:10px; border-radius:12px; border:1px solid #ddd; font-size:20px; font-weight:800; text-align:center;
+    background:#fff;
+  }
+  .mini-keys{display:flex; gap:6px; align-items:center; flex-wrap:wrap; justify-content:center}
+  .mini-keys .k{background:#f2f2ff; color:#4b4bb5; padding:8px 10px; border-radius:10px; font-weight:800; border:1px solid #d7d7ff}
   .numline-wrap{
     background: #fff9fb;
     border:1px dashed #ffd0e6; border-radius:16px; padding:8px; margin:8px 0 6px;
@@ -87,10 +97,6 @@
   .dot{width:12px; height:12px; border-radius:50%}
   svg{width:100%; height:auto;}
   .answer-row{display:flex; gap:8px; align-items:center; margin-top:6px; flex-wrap:wrap; justify-content:center;}
-  .answer-row input[type="text"]{
-    width:130px; padding:10px; border-radius:12px; border:1px solid #ddd; font-size:20px; font-weight:800; text-align:center;
-    background:#fff;
-  }
   .result-msg{min-height:24px; font-weight:900;}
   .ok{color:var(--good)} .ng{color:var(--bad)} .warn{color:var(--warn)}
   .mode-tabs{display:flex; gap:6px; flex-wrap:wrap; margin-bottom:6px; justify-content:center}
@@ -143,11 +149,16 @@
       <div class="bubble" id="opSign">-</div>
       <div class="bubble" id="opB">2</div>
       <div class="bubble">=</div>
-      <div>
-        <input id="answer" type="text" inputmode="numeric" pattern="-?[0-9]*" placeholder="輸入整數…"/>
+      <div class="answer-pack">
+        <!-- 手機負號：text + inputmode=decimal + 專用「−」鍵 -->
+        <input id="answer" type="text" inputmode="decimal" pattern="-?[0-9]*" placeholder="輸入整數…" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+        <div class="mini-keys">
+          <button class="k" id="btnMinus" type="button">−</button>
+          <button class="k" id="btnClear" type="button">清除</button>
+        </div>
       </div>
-      <button id="btnSubmit">送出</button>
-      <button id="btnSkip" class="flat">略過</button>
+      <button id="btnSubmit" type="button">送出</button>
+      <button id="btnSkip" class="flat" type="button">略過</button>
     </div>
 
     <div class="numline-wrap">
@@ -164,20 +175,14 @@
 
     <div class="answer-row">
       <div id="resultMsg" class="result-msg"></div>
-      <button id="btnNext" class="hidden">下一題 ▶</button>
-      <button id="btnShowSteps" class="ghost hidden">顯示步驟</button>
+      <button id="btnNext" class="hidden" type="button">下一題 ▶</button>
+      <button id="btnShowSteps" class="ghost hidden" type="button">顯示步驟</button>
     </div>
 
-    <div class="footer-note">提示：輸入答案時，下方數線會「同一條線」同時顯示正確路徑 & 你的移動並加以高亮差異。</div>
+    <div class="footer-note">提示：練習/複習會顯示數線；測驗模式先不顯示，送出後再顯示正確路徑與差異。</div>
   </main>
 
   <aside class="right-col">
-    <div class="card section" id="panelLeaderboardLocal">
-      <h3>📊 排行榜（本機）</h3>
-      <div class="list" id="localRanks"></div>
-      <div class="tiny">只記錄此裝置上的最佳成績。</div>
-    </div>
-
     <div class="card section">
       <h3>🧠 常錯題型雷達</h3>
       <div class="tiny">四大型態：(-a)+b、a+(-b)、(-a)+(-b)、(-a)-b</div>
@@ -205,15 +210,15 @@
       </div>
       <div class="row" style="display:flex; gap:14px; align-items:center; flex-wrap:wrap">
         <label><input id="soundOn" type="checkbox" checked> 啟用音效</label>
-        <label><input id="autoExam" type="checkbox" checked> 熟練度 ≥80% 時自動解鎖測驗</label>
+        <label><input id="autoExam" type="checkbox" checked> 熟練度 ≥80% 時提示挑戰測驗</label>
         <label><input id="showNumlinePractice" type="checkbox" checked> 練習模式顯示數線</label>
       </div>
       <div class="row">
-        <div class="label">熟練度計算：以最近 50 題正確率為基礎；錯題複習命中可加速提升。</div>
+        <div class="label">熟練度：以最近 50 題正確率為基礎；錯題複習命中可加速提升。</div>
       </div>
       <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:10px">
-        <button id="btnReset" class="flat">清除本機資料</button>
-        <button id="btnCloseSettings">關閉</button>
+        <button id="btnReset" class="flat" type="button">清除本機資料</button>
+        <button id="btnCloseSettings" type="button">關閉</button>
       </div>
     </div>
   </div>
@@ -224,7 +229,6 @@
 const state = {
   mode: 'practice',
   a: 0, b: 0, sign: '+',
-  showNumline: true,
   settings: { minVal: -10, maxVal: 10, soundOn: true, autoExam: true, showNumlinePractice: true },
   user: { nickname: '' },
   score: 0, streak: 0, best: 0,
@@ -232,7 +236,7 @@ const state = {
   errorBucket: { "(-a)+b":0, "a+(-b)":0, "(-a)+(-b)":0, "(-a)-b":0 },
   reviewQueue: []
 };
-const LS_KEY = 'neg_add_sub_overlay_v1';
+const LS_KEY = 'neg_add_sub_final_v1';
 function save(){
   const data = { settings: state.settings, user: state.user, score: state.score, streak: state.streak, best: state.best, history: state.history.slice(-200), errorBucket: state.errorBucket };
   localStorage.setItem(LS_KEY, JSON.stringify(data));
@@ -290,14 +294,16 @@ const elAns = $('#answer'), elSubmit = $('#btnSubmit'), elSkip = $('#btnSkip');
 const elNext = $('#btnNext'), elShowSteps = $('#btnShowSteps');
 const elMsg = $('#resultMsg'); const elScore = $('#score'), elStreak = $('#streak'), elBest = $('#best'), elMastery = $('#mastery');
 const elNickname = $('#nickname'); const elOverlay = $('#numlineOverlay'); const elOverlayHint = $('#overlayHint');
+const btnMinus = $('#btnMinus'), btnClear = $('#btnClear');
 
 function updateHeader(){ elScore.textContent=state.score; elStreak.textContent=state.streak; elBest.textContent=state.best; elMastery.textContent=Math.round(calcMastery()*100)+'%'; elNickname.value=state.user.nickname||''; }
 
 function setProblem(p){
   state.a=p.a; state.sign=p.sign; state.b=p.b;
   elA.textContent=p.a; elB.textContent=p.b; elSign.textContent=p.sign;
-  elAns.value=''; elAns.focus(); elMsg.textContent=''; elNext.classList.add('hidden'); elShowSteps.classList.add('hidden');
-  renderOverlay(null); // 沒有使用者輸入時只顯示正確路徑與起點
+  elAns.value=''; elAns.focus({preventScroll:true}); elMsg.textContent=''; elNext.classList.add('hidden'); elShowSteps.classList.add('hidden');
+  const showCorrect = (state.mode!=='exam') && (!!state.settings.showNumlinePractice || state.mode==='review');
+  renderOverlay(null, showCorrect);
 }
 
 function nextProblem(){
@@ -310,7 +316,7 @@ function calcMastery(){ const N=50; const recent=state.history.slice(-N); if(rec
 function pushHistory(rec){ state.history.push(rec); if(!rec.correct){ state.reviewQueue.push({a:rec.a,sign:rec.sign,b:rec.b}); if(state.reviewQueue.length>50) state.reviewQueue.shift(); } save(); renderRightPanels(); }
 
 /* ===== 疊加數線渲染 ===== */
-function renderOverlay(userAns){
+function renderOverlay(userAns, showCorrect=true){
   const a=state.a, sign=state.sign, b=state.b;
   const expectedDelta = (sign==='+'? b : -b);
   const expectedEnd = a + expectedDelta;
@@ -334,22 +340,26 @@ function renderOverlay(userAns){
     ${ticks.join('')}
   `;
 
-  // 正確路徑（紫/粉）：一步一弧
-  const correctDir = expectedDelta>=0 ? 1 : -1;
-  const correctColor = expectedDelta>=0 ? 'var(--primary)' : 'var(--accent)';
-  let correctPath=''; let cur=a;
-  for(let i=0;i<Math.abs(expectedDelta);i++){
-    const x1=scale(cur), x2=scale(cur+correctDir), mid=(x1+x2)/2, arcH=24+Math.min(i*3,18);
-    correctPath += `<path d="M ${x1} ${h-42} Q ${mid} ${h-42-arcH} ${x2} ${h-42}" fill="none" stroke="${correctColor}" stroke-width="2" marker-end="url(#arrowC)"/>`;
-    cur+=correctDir;
+  // 正確路徑（紫/粉）：一步一弧（僅在 showCorrect=true 時顯示）
+  let correctLayer = '';
+  if(showCorrect){
+    const correctDir = expectedDelta>=0 ? 1 : -1;
+    const correctColor = expectedDelta>=0 ? 'var(--primary)' : 'var(--accent)';
+    let correctPath=''; let cur=a;
+    for(let i=0;i<Math.abs(expectedDelta);i++){
+      const x1=scale(cur), x2=scale(cur+correctDir), mid=(x1+x2)/2, arcH=24+Math.min(i*3,18);
+      correctPath += `<path d="M ${x1} ${h-42} Q ${mid} ${h-42-arcH} ${x2} ${h-42}" fill="none" stroke="${correctColor}" stroke-width="2" marker-end="url(#arrowC)"/>`;
+      cur+=correctDir;
+    }
+    correctLayer += `<circle cx="${scale(expectedEnd)}" cy="${h-40}" r="6" fill="${correctDir>0?'var(--primary)':'var(--accent)'}" />`;
+    correctLayer = correctPath + correctLayer;
   }
 
   // 你的路徑（綠/橘/紅）：依差異著色
   let yourPath=''; let yourDots=''; let diffMark=''; let hint='';
   const startX = scale(a);
-  const endExpectedX = scale(expectedEnd);
-  let statusClass = '';
   yourDots += `<circle cx="${startX}" cy="${h-40}" r="6" fill="#4b4bb5" />`;
+  let statusClass = '';
 
   if(userDelta!==null){
     const sameDir = Math.sign(userDelta) === Math.sign(expectedDelta);
@@ -359,19 +369,16 @@ function renderOverlay(userAns){
     else if(sameDir){ yourColor='var(--warn)'; statusClass='warn'; hint=`⚠️ 方向正確，但步數 ${Math.abs(userDelta)} ≠ 預期 ${Math.abs(expectedDelta)}。`; }
     else{ yourColor='var(--bad)'; statusClass='ng'; hint=`❌ 方向錯誤，應往 ${expectedDelta>=0?'右':'左'} ${Math.abs(expectedDelta)} 步。`; }
 
-    // 畫你的每一步
     let curA=a; const dir = userDelta>=0 ? 1 : -1;
     for(let i=0;i<Math.abs(userDelta);i++){
       const x1=scale(curA), x2=scale(curA+dir), mid=(x1+x2)/2, arcH=20+Math.min(i*3,18);
       yourPath += `<path d="M ${x1} ${h-46} Q ${mid} ${h-46-arcH} ${x2} ${h-46}" fill="none" stroke="${yourColor}" stroke-width="2.5" marker-end="url(#arrowU)" opacity="0.95"/>`;
       curA+=dir;
     }
-    const endUserX = scale(userEnd);
-    yourDots += `<circle cx="${endUserX}" cy="${h-40}" r="6" fill="${yourColor}" />`;
+    yourDots += `<circle cx="${scale(userEnd)}" cy="${h-40}" r="6" fill="${yourColor}" />`;
 
-    // 差異高亮：若終點不同，畫一條「虛線對比」
-    if(!correctEnd){
-      const x1 = endUserX, x2 = endExpectedX;
+    if(showCorrect && !correctEnd){
+      const x1 = scale(userEnd), x2 = scale(expectedEnd);
       diffMark = `<line x1="${x1}" y1="${h-32}" x2="${x2}" y2="${h-32}" stroke="${yourColor}" stroke-width="2" stroke-dasharray="6 4" />
                   <text x="${(x1+x2)/2}" y="${h-36}" text-anchor="middle" font-size="12" fill="${yourColor}">差距 ${Math.abs(userEnd-expectedEnd)}</text>`;
     }
@@ -379,26 +386,23 @@ function renderOverlay(userAns){
     elOverlayHint.textContent = hint;
   }else{
     elOverlayHint.className = 'tiny';
-    elOverlayHint.textContent = '在數線上想像一步一步移動；輸入答案可即時疊加你的路徑與差異。';
+    elOverlayHint.textContent = showCorrect
+      ? '在數線上想像一步一步移動；輸入答案可即時疊加你的路徑與差異。'
+      : '測驗模式：先思考後作答，送出後會顯示正確路徑與差異。';
   }
-
-  const nowDot = `<circle cx="${startX}" cy="${h-40}" r="6" fill="#4b4bb5" />`;
-  const correctEndDot = `<circle cx="${endExpectedX}" cy="${h-40}" r="6" fill="${correctColor}" />`;
 
   elOverlay.innerHTML = `
     <defs>
       <marker id="arrowC" markerWidth="12" markerHeight="12" refX="8" refY="6" orient="auto-start-reverse">
-        <path d="M0,0 L12,6 L0,12 z" fill="${correctColor}"></path>
+        <path d="M0,0 L12,6 L0,12 z" fill="${expectedDelta>=0?'var(--primary)':'var(--accent)'}"></path>
       </marker>
       <marker id="arrowU" markerWidth="12" markerHeight="12" refX="8" refY="6" orient="auto-start-reverse">
         <path d="M0,0 L12,6 L0,12 z" fill="#000"></path>
       </marker>
     </defs>
     ${base}
-    ${correctPath}
+    ${correctLayer}
     ${yourPath}
-    ${nowDot}
-    ${correctEndDot}
     ${yourDots}
     ${diffMark}
   `;
@@ -412,7 +416,7 @@ function submitAnswer(){
     elMsg.className = 'result-msg ng'; beep('bad'); return;
   }
   const userAns = parseInt(raw,10);
-  renderOverlay(userAns);
+  renderOverlay(userAns, /*showCorrect=*/true); // 送出後顯示正確路徑以比對
 
   const {a,b,sign} = state;
   const correctAns = sign==='+' ? a+b : a-b;
@@ -435,7 +439,7 @@ function submitAnswer(){
   if(state.settings.autoExam){
     const m = calcMastery(); if(m>=0.8){ elMsg.innerHTML += `　🎉 熟練度 <b>${Math.round(m*100)}%</b>，可挑戰「測驗（無數線）」！`; }
   }
-  elNext.classList.remove('hidden'); updateHeader(); save(); renderRightPanels(); updateLocalLeaderboard();
+  elNext.classList.remove('hidden'); updateHeader(); save(); renderRightPanels();
 }
 
 function skipQuestion(){ elMsg.textContent='已略過，換一題！'; elMsg.className='result-msg'; state.streak=0; updateHeader(); nextProblem(); }
@@ -467,26 +471,6 @@ function renderRightPanels(){
   }
 }
 
-/* ===== 本機排行榜 ===== */
-function getLocalBoard(){
-  const key='neg_add_sub_board_overlay_v1';
-  const raw = localStorage.getItem(key); let arr=[]; if(raw){ try{arr=JSON.parse(raw)||[]}catch(e){} }
-  return { list: arr, save(newList){ localStorage.setItem(key, JSON.stringify(newList)); } }
-}
-function updateLocalLeaderboard(){
-  const board=getLocalBoard(); const name=state.user.nickname?.trim()||'匿名學員';
-  const existing = board.list.find(x=>x.name===name);
-  if(existing){ existing.score=Math.max(existing.score, state.best); existing.ts=Date.now(); }
-  else{ board.list.push({name,score:state.best,ts:Date.now()}); }
-  board.list.sort((a,b)=> b.score - a.score || a.ts - b.ts); board.list = board.list.slice(0,10); board.save(board.list);
-  const list=$('#localRanks'); list.innerHTML=''; if(board.list.length===0){ list.innerHTML='<div class="tiny">尚無紀錄</div>'; return; }
-  board.list.forEach((r,idx)=>{
-    const row=document.createElement('div'); row.className='row';
-    const medal = idx===0?'🥇': idx===1?'🥈': idx===2?'🥉':'';
-    row.innerHTML = `<div>${medal?`<span class="rank-medal">${medal}</span> `:''}${r.name}</div><div><b>${r.score}</b></div>`; list.appendChild(row);
-  });
-}
-
 /* ===== 設定面板 ===== */
 const modal = $('#settingsModal');
 $('#btnSettings').addEventListener('click', ()=>{
@@ -496,30 +480,39 @@ $('#btnSettings').addEventListener('click', ()=>{
 });
 $('#btnCloseSettings').addEventListener('click', ()=> modal.classList.add('hidden'));
 $('#btnReset').addEventListener('click', ()=>{
-  if(confirm('確定清除本機學習資料與本機排行榜嗎？')){ localStorage.removeItem(LS_KEY); localStorage.removeItem('neg_add_sub_board_overlay_v1'); location.reload(); }
+  if(confirm('確定清除本機學習資料嗎？')){ localStorage.removeItem(LS_KEY); location.reload(); }
 });
-$('#minVal').addEventListener('change', e=>{ state.settings.minVal=Number(e.target.value); save(); renderOverlay(null); });
-$('#maxVal').addEventListener('change', e=>{ state.settings.maxVal=Number(e.target.value); save(); renderOverlay(null); });
+$('#minVal').addEventListener('change', e=>{ state.settings.minVal=Number(e.target.value); save(); renderOverlay(null, state.mode!=='exam'); });
+$('#maxVal').addEventListener('change', e=>{ state.settings.maxVal=Number(e.target.value); save(); renderOverlay(null, state.mode!=='exam'); });
 $('#soundOn').addEventListener('change', e=>{ state.settings.soundOn=!!e.target.checked; save(); });
 $('#autoExam').addEventListener('change', e=>{ state.settings.autoExam=!!e.target.checked; save(); });
 $('#showNumlinePractice').addEventListener('change', e=>{ state.settings.showNumlinePractice=!!e.target.checked; save(); });
 
-$('#nickname').addEventListener('change', e=>{ state.user.nickname=e.target.value.trim(); save(); updateLocalLeaderboard(); });
+$('#nickname').addEventListener('change', e=>{ state.user.nickname=e.target.value.trim(); save(); });
 
-/* ===== 事件：答題 & 即時疊加 ===== */
-elSubmit.addEventListener('click', submitAnswer);
+/* ===== 事件：答題 & 即時疊加（行動版可靠觸發） ===== */
+const submitAnswerPointerSafe = ()=> submitAnswer();
+elSubmit.addEventListener('click', submitAnswerPointerSafe);
+elSubmit.addEventListener('pointerup', submitAnswerPointerSafe); // 行動裝置
 elAns.addEventListener('keydown', (e)=>{ if(e.key==='Enter') submitAnswer(); });
 elAns.addEventListener('input', ()=>{
   const raw=elAns.value.trim();
-  if(/^[-]?\\d+$/.test(raw)){ renderOverlay(parseInt(raw,10)); }
-  else if(raw===''){ renderOverlay(null); }
+  if(/^[-]?\\d+$/.test(raw)){ renderOverlay(parseInt(raw,10), state.mode!=='exam'); }
+  else if(raw===''){ renderOverlay(null, state.mode!=='exam'); }
 });
-elSkip.addEventListener('click', skipQuestion);
-elNext.addEventListener('click', ()=>{ nextProblem(); elNext.classList.add('hidden'); });
-$$('.mode-tabs button').forEach(btn=> btn.addEventListener('click', ()=> switchMode(btn.dataset.mode)));
+elSkip.addEventListener('click', ()=>{ skipQuestion(); });
+elSkip.addEventListener('pointerup', ()=>{ skipQuestion(); });
+btnMinus.addEventListener('click', ()=>{
+  const v = elAns.value;
+  if(v.startsWith('-')){ elAns.value = v.slice(1); }
+  else{ elAns.value = v ? ('-'+v) : '-'; }
+  elAns.focus({preventScroll:true});
+  elAns.dispatchEvent(new Event('input'));
+});
+btnClear.addEventListener('click', ()=>{ elAns.value=''; elAns.focus({preventScroll:true}); elAns.dispatchEvent(new Event('input')); });
 
 /* ===== 初始化 ===== */
-function init(){ load(); updateHeader(); updateLocalLeaderboard(); renderRightPanels(); nextProblem(); document.addEventListener('gesturestart', e=>e.preventDefault()); }
+function init(){ load(); updateHeader(); renderRightPanels(); nextProblem(); document.addEventListener('gesturestart', e=>e.preventDefault()); }
 init();
 </script>
 </body>
