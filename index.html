@@ -25,6 +25,8 @@
     color:var(--ink);
     -webkit-tap-highlight-color: transparent;
   }
+  /* utility */
+  .hidden{display:none !important}
   /* Compact mobile header */
   header{
     display:flex; align-items:center; justify-content:space-between;
@@ -97,7 +99,7 @@
   svg{width:100%; height:auto;}
   .result-msg{min-height:24px; font-weight:900; text-align:center; margin-top:4px}
   .ok{color:var(--good)} .ng{color:var(--bad)}
-  .tiny{font-size:12px; color:var(--muted); text-align:center}
+  .tiny{font-size:12px; color:#666; text-align:center}
   .side{display:grid; gap:10px}
   @media (min-width: 900px){
     .layout{grid-template-columns: 1fr 320px; max-width:1100px}
@@ -176,8 +178,8 @@
 
 <!-- 設定對話框 -->
 <div id="settingsModal" class="hidden" style="position:fixed; inset:0; display:grid; place-items:center; background:rgba(0,0,0,0.45);">
-  <div class="card" style="width:min(560px,95vw); max-height:90vh; overflow:auto;">
-    <h3 style="margin:0 0 8px">⚙️ 設定</h3>
+  <div class="card" role="dialog" aria-modal="true" aria-labelledby="dlgTitle" style="width:min(560px,95vw); max-height:90vh; overflow:auto;">
+    <h3 id="dlgTitle" style="margin:0 0 8px">⚙️ 設定</h3>
     <div style="display:grid; gap:10px;">
       <div class="row">
         <label class="tiny">暱稱（本機記錄用）</label>
@@ -215,7 +217,7 @@ const state = {
   errorBucket: { "(-a)+b":0, "a+(-b)":0, "(-a)+(-b)":0, "(-a)-b":0 },
   reviewQueue: []
 };
-const LS_KEY = 'neg_add_sub_mobile_ui_v3';
+const LS_KEY = 'neg_add_sub_mobile_ui_v4';
 function save(){
   const data = { settings: state.settings, user: state.user, score: state.score, streak: state.streak, best: state.best, history: state.history.slice(-200), errorBucket: state.errorBucket };
   localStorage.setItem(LS_KEY, JSON.stringify(data));
@@ -273,187 +275,8 @@ const elAns = $('#answer'), elSubmit = $('#btnSubmit'), elSkip = $('#btnSkip');
 const elNext = $('#btnNext');
 const elMsg = $('#resultMsg'); const elScore = $('#score'), elStreak = $('#streak'), elBest = $('#best'), elMastery = $('#mastery');
 const elNumline = $('#numline'); const scoreFly = $('#scoreFly');
+const modal = document.getElementById('settingsModal');
+const btnCloseSettings = document.getElementById('btnCloseSettings');
+const btnSettings = document.getElementById('btnSettings');
 
-function updateHeader(){ elScore.textContent=state.score; elStreak.textContent=state.streak; elBest.textContent=state.best; elMastery.textContent=Math.round(calcMastery()*100)+'%'; }
-
-function setProblem(p){
-  state.a=p.a; state.sign=p.sign; state.b=p.b;
-  elA.textContent=p.a; elB.textContent=p.b; elSign.textContent=p.sign;
-  elAns.value=''; elMsg.textContent='';
-  const showNow = (state.mode!=='exam') && (!!state.settings.showNumlinePractice || state.mode==='review');
-  drawNumberLine(p.a, p.sign, p.b, showNow ? (p.sign==='+'? p.a+p.b : p.a-p.b) : null);
-}
-
-function nextProblem(){
-  if((state.mode==='review') && state.reviewQueue.length>0){ const q=state.reviewQueue.shift(); setProblem(q); return; }
-  if(state.mode==='review' && state.reviewQueue.length===0){ switchMode('practice'); return; }
-  setProblem(genProblem());
-}
-
-function calcMastery(){ const N=50; const recent=state.history.slice(-N); if(recent.length===0) return 0; return recent.filter(h=>h.correct).length/recent.length; }
-function pushHistory(rec){ state.history.push(rec); if(!rec.correct){ state.reviewQueue.push({a:rec.a,sign:rec.sign,b:rec.b}); if(state.reviewQueue.length>50) state.reviewQueue.shift(); } save(); renderRightPanels(); }
-
-/* ===== 數線（僅系統示意） ===== */
-function drawNumberLine(a, sign, b, answerOrNull){
-  const {minVal, maxVal} = state.settings;
-  const result = sign==='+' ? a+b : a-b;
-  const min = Math.min(minVal, a, result) - 1;
-  const max = Math.max(maxVal, a, result) + 1;
-  const w=780, h=150, pad=40;
-  const scale = x => pad + (x - min) * ((w-2*pad)/Math.max(1,(max-min)));
-  const steps = (sign==='+'? b : -b);
-  const dir = steps>=0 ? 1 : -1;
-  const nSteps = Math.abs(steps);
-
-  let ticks='';
-  for(let x=min; x<=max; x++){
-    const X = scale(x);
-    const isZero = (x===0);
-    ticks += `<line x1="${X}" y1="${h-45}" x2="${X}" y2="${h-35}" stroke="${isZero?'#c84580':'#888'}" stroke-width="${isZero?2:1}" />`;
-    ticks += `<text x="${X}" y="${h-18}" text-anchor="middle" font-size="12" fill="${isZero?'#c84580':'#555'}" font-weight="${isZero?700:400}">${x}</text>`;
-  }
-  const base = `<line x1="${scale(min)}" y1="${h-40}" x2="${scale(max)}" y2="${h-40}" stroke="#444" stroke-width="2" />${ticks}`;
-
-  let arcs=''; let cur=a;
-  const correctColor = dir>0 ? 'var(--primary)' : 'var(--accent)';
-  for(let i=0;i<nSteps;i++){
-    const x1=scale(cur), x2=scale(cur+dir), mid=(x1+x2)/2, arcH=24+Math.min(i*3,18);
-    arcs += `<path d="M ${x1} ${h-42} Q ${mid} ${h-42-arcH} ${x2} ${h-42}" fill="none" stroke="${correctColor}" stroke-width="2" marker-end="url(#arrow)"/>`;
-    cur+=dir;
-  }
-
-  const nowDot = `<circle cx="${scale(a)}" cy="${h-40}" r="6" fill="#4b4bb5" />`;
-  const resDot = (answerOrNull!==null) ? `<circle cx="${scale(result)}" cy="${h-40}" r="6" fill="${correctColor}" />` : '';
-
-  elNumline.innerHTML = `
-    <defs>
-      <marker id="arrow" markerWidth="12" markerHeight="12" refX="8" refY="6" orient="auto-start-reverse">
-        <path d="M0,0 L12,6 L0,12 z" fill="${correctColor}"></path>
-      </marker>
-    </defs>
-    ${base}
-    ${arcs}
-    ${nowDot}
-    ${resDot}
-  `;
-}
-
-/* ===== 檢查答案、計分（即時反應 + 分數動畫） ===== */
-function submitAnswer(){
-  const raw = elAns.value.trim();
-  if(!/^[-]?\\d+$/.test(raw)){
-    // 不顯示「請輸入整數」，若輸入無效就忽略
-    return;
-  }
-  const userAns = parseInt(raw,10);
-  const {a,b,sign} = state;
-  const correctAns = sign==='+' ? a+b : a-b;
-  const ok = (userAns===correctAns);
-
-  // 顯示正確步驟與終點（測驗也在送出後顯示）
-  drawNumberLine(a, sign, b, correctAns);
-
-  const rec = {a,b,sign,ans:userAns,correct:ok, ts:Date.now()}; pushHistory(rec);
-
-  if(ok){
-    beep('good'); state.streak += 1;
-    const bonus = 10 + Math.min(state.streak*2, 30); state.score += bonus;
-    elMsg.textContent = '答對';
-    elMsg.className='result-msg ok';
-    // 分數動畫
-    scoreFly.textContent = `+${bonus}`;
-    scoreFly.style.color = 'var(--good)';
-    scoreFly.classList.add('show');
-    setTimeout(()=> scoreFly.classList.remove('show'), 650);
-  }else{
-    beep('bad'); state.streak = 0; state.score = Math.max(0, state.score - 3);
-    elMsg.textContent = '答錯';
-    elMsg.className='result-msg ng';
-    // 錯誤不加分，但也做個微動畫提示
-    scoreFly.textContent = `-3`;
-    scoreFly.style.color = 'var(--bad)';
-    scoreFly.classList.add('show');
-    setTimeout(()=> scoreFly.classList.remove('show'), 650);
-  }
-
-  if(state.score>state.best){ state.best = state.score; }
-  updateHeader(); save(); renderRightPanels();
-}
-
-function skipQuestion(){ elMsg.textContent=''; state.streak=0; updateHeader(); nextProblem(); }
-function switchMode(m){
-  state.mode = m; $$('.mode-tabs button').forEach(btn=>btn.classList.toggle('active', btn.dataset.mode===m));
-  nextProblem();
-}
-
-/* ===== 右側面板 ===== */
-function renderRightPanels(){
-  const et = $('#errorTypes'); et.innerHTML='';
-  const items = Object.entries(state.errorBucket);
-  if(items.every(([k,v])=>v===0)){ et.innerHTML = `<div class="tiny">目前沒有明顯的常錯型態。</div>`; }
-  else{
-    for(const [k,v] of items){
-      const row=document.createElement('div'); row.style.cssText='display:flex;justify-content:space-between;align-items:center;border:1px solid #eee;border-radius:10px;padding:6px 10px';
-      row.innerHTML = `<div>${k}</div><div class="tiny">錯 <b>${v}</b> 次</div>`; et.appendChild(row);
-    }
-  }
-  const log = $('#recentLog'); log.innerHTML=''; const last = state.history.slice(-10).reverse();
-  if(last.length===0){ log.innerHTML = `<div class="tiny">尚無資料</div>`; }
-  else{
-    last.forEach(r=>{
-      const row=document.createElement('div'); row.style.cssText='display:flex;justify-content:space-between;align-items:center;border:1px solid #eee;border-radius:10px;padding:6px 10px';
-      const ans = r.sign==='+'? r.a+r.b : r.a-r.b;
-      row.innerHTML = `<div>${r.a} ${r.sign} ${r.b} = ${ans}</div><div class="${r.correct?'ok':'ng'}">${r.correct?'✔︎':'✖︎'}</div>`;
-      log.appendChild(row);
-    });
-  }
-}
-
-/* ===== 設定面板 ===== */
-const modal = $('#settingsModal');
-$('#btnSettings').addEventListener('click', ()=>{
-  $('#minVal').value=state.settings.minVal; $('#maxVal').value=state.settings.maxVal;
-  $('#soundOn').checked=state.settings.soundOn; $('#autoExam').checked=state.settings.autoExam; $('#showNumlinePractice').checked=state.settings.showNumlinePractice;
-  $('#nickname').value=state.user.nickname||'';
-  modal.classList.remove('hidden');
-});
-$('#btnCloseSettings').addEventListener('click', ()=> modal.classList.add('hidden'));
-$('#btnReset').addEventListener('click', ()=>{
-  if(confirm('確定清除本機學習資料嗎？')){ localStorage.removeItem(LS_KEY); location.reload(); }
-});
-$('#minVal').addEventListener('change', e=>{ state.settings.minVal=Number(e.target.value); save(); setProblem({a:state.a, sign:state.sign, b:state.b}); });
-$('#maxVal').addEventListener('change', e=>{ state.settings.maxVal=Number(e.target.value); save(); setProblem({a:state.a, sign:state.sign, b:state.b}); });
-$('#soundOn').addEventListener('change', e=>{ state.settings.soundOn=!!e.target.checked; save(); });
-$('#autoExam').addEventListener('change', e=>{ state.settings.autoExam=!!e.target.checked; save(); });
-$('#showNumlinePractice').addEventListener('change', e=>{ state.settings.showNumlinePractice=!!e.target.checked; save(); setProblem({a:state.a, sign:state.sign, b:state.b}); });
-$('#nickname').addEventListener('change', e=>{ state.user.nickname=e.target.value.trim(); save(); });
-
-/* ===== 事件：送出／下一題／略過（行動版可靠觸發） ===== */
-const submitAnswerPointerSafe = ()=> submitAnswer();
-elSubmit.addEventListener('click', submitAnswerPointerSafe);
-elSubmit.addEventListener('pointerup', submitAnswerPointerSafe);
-elNext.addEventListener('click', ()=> nextProblem());
-elNext.addEventListener('pointerup', ()=> nextProblem());
-elSkip.addEventListener('click', ()=> skipQuestion());
-elSkip.addEventListener('pointerup', ()=> skipQuestion());
-
-// 手機負號鍵
-$('#btnMinus').addEventListener('click', ()=>{
-  const v = elAns.value;
-  if(v.startsWith('-')){ elAns.value = v.slice(1); }
-  else{ elAns.value = v ? ('-'+v) : '-'; }
-  elAns.focus({preventScroll:true});
-});
-$('#btnClear').addEventListener('click', ()=>{ elAns.value=''; elAns.focus({preventScroll:true}); });
-
-// Enter 送出
-elAns.addEventListener('keydown', (e)=>{ if(e.key==='Enter') submitAnswer(); });
-
-$$('.mode-tabs button').forEach(btn=> btn.addEventListener('click', ()=> switchMode(btn.dataset.mode)));
-
-/* ===== 初始化 ===== */
-function init(){ load(); updateHeader(); renderRightPanels(); nextProblem(); document.addEventListener('gesturestart', e=>e.preventDefault()); }
-init();
-</script>
-</body>
-</html>
+function updateHeader(){ elScore.textContent=state.score; elStreak.textContent=state.streak; elBest.textContent=state.best; elMastery.textContent=Math.round(cal
